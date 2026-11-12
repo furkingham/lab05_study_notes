@@ -1,31 +1,30 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
 
-/// Part 6: push notifications with Firebase Cloud Messaging (FCM).
 class MessagingService {
-  MessagingService(this._messaging);
-
   final FirebaseMessaging _messaging;
 
-  /// The topic every student subscribes to.
-  static const topic = 'comp205';
+  MessagingService({FirebaseMessaging? messaging})
+      : _messaging = messaging ?? FirebaseMessaging.instance;
 
-  /// 1. await _messaging.requestPermission()  (Android 13+ shows a dialog)
-  /// 2. if settings.authorizationStatus == AuthorizationStatus.denied -> return null
-  /// 3. final token = await _messaging.getToken()
-  /// 4. await _messaging.subscribeToTopic(topic), then return token
   Future<String?> init() async {
-    // TODO(6)
-    return null;
+    await _messaging.requestPermission();
+    await _messaging.subscribeToTopic('comp205');
+    return await _messaging.getToken();
   }
 
-  /// Calls [show] for every message that arrives while the app is open.
-  /// In the foreground Android does not show the notification itself.
-  /// Listen to FirebaseMessaging.onMessage; use message.notification?.title / ?.body
-  /// ('New message' and '' if they are null).
-  void listenInForeground(void Function(String title, String body) show) {
-    // TODO(6)
+  void listenInForeground(BuildContext context) {
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      final notification = message.notification;
+      if (notification != null && context.mounted) {
+        final title = notification.title ?? '';
+        final body = notification.body ?? '';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$title: $body'),
+          ),
+        );
+      }
+    });
   }
 }
-
-// Remove this line when you are done:
-// ignore_for_file: unused_field

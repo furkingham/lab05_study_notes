@@ -1,48 +1,74 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../data/auth_repository.dart';
 import '../data/notes_repository.dart';
 import '../models/note.dart';
 import 'add_note_dialog.dart';
 
-/// Part 4: the signed-in user's notes, live from Firestore.
-///
-/// - AppBar title 'My Notes'; an IconButton (tooltip 'Sign out', Icons.logout)
-///   that calls AuthRepository.signOut().
-/// - A FloatingActionButton (tooltip 'Add note') that opens AddNoteDialog and
-///   calls NotesRepository.addNote. On ArgumentError show a SnackBar 'A title is required.'
-/// - Body: a StreamBuilder over _notes:
-///     error                -> Text('Could not load notes.')
-///     no data yet          -> CircularProgressIndicator
-///     empty list           -> Text('No notes yet')
-///     otherwise            -> a ListView of ListTile(title, subtitle: body), each inside a
-///                             Dismissible (key: ValueKey(note.id)) that calls deleteNote.
-class NotesScreen extends StatefulWidget {
-  const NotesScreen({super.key, required this.uid});
-
+class NotesScreen extends StatelessWidget {
   final String uid;
 
-  @override
-  State<NotesScreen> createState() => _NotesScreenState();
-}
-
-class _NotesScreenState extends State<NotesScreen> {
-  // Created once, not in build (Week 6: a new stream on every rebuild restarts it). Given.
-  late final Stream<List<Note>> _notes = context.read<NotesRepository>().watchNotes(widget.uid);
-
-  Future<void> _add() async {
-    // TODO(4): showDialog<(String, String)>(context: context, builder: (_) => const AddNoteDialog())
-    //          then addNote(widget.uid, result.$1, result.$2).
-    // Tip: read the repository and ScaffoldMessenger BEFORE the first await.
-  }
+  const NotesScreen({super.key, required this.uid});
 
   @override
   Widget build(BuildContext context) {
-    // TODO(4)
-    return const Scaffold(body: Center(child: Text('TODO: NotesScreen')));
+    final notesRepo = context.read<NotesRepository>();
+    final authRepo = context.read<AuthRepository>();
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('My Notes'),
+        actions: [
+          IconButton(
+            tooltip: 'Sign out',
+            icon: const Icon(Icons.logout),
+            onPressed: () => authRepo.signOut(),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        tooltip: 'Add note',
+        child: const Icon(Icons.add),
+        onPressed: () async {
+        final result = await showDialog<(String, String)>(                  context: context,
+            builder: (_) => const AddNoteDialog(),
+          );
+          if (result == null) return;
+          try {
+           await notesRepo.addNote(uid, result.$1, result.$2); } catch (e) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context)
+                  .showSnackBar(SnackBar(content: Text(e.toString())));
+            }
+          }
+        },
+      ),
+      body: StreamBuilder<List<Note>>(
+        stream: notesRepo.watchNotes(uid),
+        builder: (context, snap) {
+          if (snap.hasError) {
+            return const Center(child: Text('Could not load notes.'));
+          }
+          if (!snap.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final notes = snap.data!;
+          if (notes.isEmpty) {
+            return const Center(child: Text('No notes yet'));
+          }
+          return ListView.builder(
+            itemCount: notes.length,
+            itemBuilder: (context, i) {
+              final n = notes[i];
+              return Dismissible(
+                key: ValueKey(n.id),
+                onDismissed: (_) => notesRepo.deleteNote(uid, n.id),
+                child: ListTile(title: Text(n.title), subtitle: Text(n.body)),
+              );
+            },
+          );
+        },
+      ),
+    );
   }
 }
-
-// These imports are used by the finished screen.
-// ignore_for_file: unused_import, unused_element, unused_field
