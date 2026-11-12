@@ -1,30 +1,22 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/material.dart';
 
 class MessagingService {
   final FirebaseMessaging _messaging;
 
-  MessagingService({FirebaseMessaging? messaging})
-      : _messaging = messaging ?? FirebaseMessaging.instance;
+  MessagingService(this._messaging);
 
+  /// Asks for permission, subscribes to the topic and returns the FCM token.
   Future<String?> init() async {
     await _messaging.requestPermission();
     await _messaging.subscribeToTopic('comp205');
-    return await _messaging.getToken();
+    return _messaging.getToken();
   }
 
-  void listenInForeground(BuildContext context) {
+  /// Calls [show] for every message that arrives while the app is open.
+  void listenInForeground(void Function(String title, String body) show) {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      final notification = message.notification;
-      if (notification != null && context.mounted) {
-        final title = notification.title ?? '';
-        final body = notification.body ?? '';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('$title: $body'),
-          ),
-        );
-      }
+      final n = message.notification;
+      show(n?.title ?? '', n?.body ?? '');
     });
   }
 }

@@ -13,8 +13,7 @@ class AuthRepository {
 
   AuthRepository(this._auth);
 
-  Stream<User?> get authStateChanges => _auth.authStateChanges();
-
+Stream<User?> authStateChanges() => _auth.authStateChanges();
   User? get currentUser => _auth.currentUser;
 
   Future<void> signIn(String email, String password) async {
