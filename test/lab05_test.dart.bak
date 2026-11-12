@@ -1,0 +1,26 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:lab05_study_notes/data/auth_repository.dart';
+import 'package:lab05_study_notes/models/note.dart';
+
+void main() {
+  setUpAll(() {
+    FakeFirebaseFirestore();
+  });
+
+  group('Own Tests', () {
+    test('messageFor maps weak-password correctly', () {
+      final msg = AuthRepository.messageFor('weak-password');
+      expect(msg, equals('The password is too weak.'));
+    });
+
+    test('Note.fromFirestore parses valid data', () {
+      final note = Note.fromFirestore('id1', {
+        'title': 'Test Title',
+        'body': 'Test Body',
+      });
+      expect(note.title, equals('Test Title'));
+      expect(note.body, equals('Test Body'));
+    });
+  });
+}

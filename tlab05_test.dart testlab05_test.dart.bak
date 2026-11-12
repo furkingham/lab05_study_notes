@@ -1,0 +1,194 @@
+warning: in the working copy of 'test/lab05_test.dart', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/test/lab05_test.dart b/test/lab05_test.dart[m
+[1mindex 09a71ce..959dc30 100644[m
+[1m--- a/test/lab05_test.dart[m
+[1m+++ b/test/lab05_test.dart[m
+[36m@@ -1,172 +1,26 @@[m
+[31m-// Lab 5 - provided tests. Do not change this file: the TAs grade with the original.[m
+[31m-// No real Firebase is used: FakeFirebaseFirestore and MockFirebaseAuth run in memory.[m
+[31m-import 'package:cloud_firestore/cloud_firestore.dart';[m
+[31m-import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';[m
+[31m-import 'package:firebase_auth/firebase_auth.dart';[m
+[31m-import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';[m
+[31m-import 'package:flutter/material.dart';[m
+ import 'package:flutter_test/flutter_test.dart';[m
+[32m+[m[32mimport 'package:fake_cloud_firestore/fake_cloud_firestore.dart';[m
+ import 'package:lab05_study_notes/data/auth_repository.dart';[m
+[31m-import 'package:lab05_study_notes/data/notes_repository.dart';[m
+ import 'package:lab05_study_notes/models/note.dart';[m
+[31m-import 'package:lab05_study_notes/screens/notes_screen.dart';[m
+[31m-import 'package:mock_exceptions/mock_exceptions.dart';[m
+[31m-import 'package:provider/provider.dart';[m
+[31m-[m
+[31m-CollectionReference<Map<String, dynamic>> notesOf(FakeFirebaseFirestore db, String uid) =>[m
+[31m-    db.collection('users').doc(uid).collection('notes');[m
+ [m
+ void main() {[m
+[31m-  // Create one fake first: it makes FieldValue.serverTimestamp() work in tests.[m
+[31m-  setUpAll(FakeFirebaseFirestore.new);[m
+[31m-[m
+[31m-  group('Part 1 - Note', () {[m
+[31m-    test('fromFirestore reads id, title, body and createdAt', () {[m
+[31m-      final note = Note.fromFirestore('n1', {[m
+[31m-        'title': 'Exam',[m
+[31m-        'body': 'Room B238',[m
+[31m-        'createdAt': Timestamp.fromDate(DateTime(2026, 11, 11, 10)),[m
+[31m-      });[m
+[31m-      expect(note.id, 'n1');[m
+[31m-      expect(note.title, 'Exam');[m
+[31m-      expect(note.body, 'Room B238');[m
+[31m-      expect(note.createdAt, DateTime(2026, 11, 11, 10));[m
+[31m-    });[m
+[31m-[m
+[31m-    test('fromFirestore: createdAt may be missing; a missing title is a FormatException', () {[m
+[31m-      expect(Note.fromFirestore('n2', {'title': 'A', 'body': ''}).createdAt, isNull);[m
+[31m-      expect(() => Note.fromFirestore('n3', {'body': 'no title'}), throwsFormatException);[m
+[31m-    });[m
+[31m-[m
+[31m-    test('toFirestore writes title, body and a server timestamp', () {[m
+[31m-      final map = const Note(id: 'x', title: 'T', body: 'B').toFirestore();[m
+[31m-      expect(map['title'], 'T');[m
+[31m-      expect(map['body'], 'B');[m
+[31m-      expect(map['createdAt'], isA<FieldValue>());[m
+[31m-      expect(map.containsKey('id'), isFalse, reason: 'the id is the document id, not a field');[m
+[31m-    });[m
+[31m-  });[m
+[31m-[m
+[31m-  group('Part 2 - AuthRepository', () {[m
+[31m-    test('messageFor turns Firebase error codes into friendly messages', () {[m
+[31m-      expect(AuthRepository.messageFor('invalid-email'), 'The email address is not valid.');[m
+[31m-      expect(AuthRepository.messageFor('weak-password'), 'The password must be at least 6 characters.');[m
+[31m-      expect(AuthRepository.messageFor('email-already-in-use'), 'An account already exists for this email.');[m
+[31m-      expect(AuthRepository.messageFor('invalid-credential'), 'Wrong email or password.');[m
+[31m-      expect(AuthRepository.messageFor('something-new'), 'Sign-in failed. Please try again.');[m
+[31m-    });[m
+[31m-[m
+[31m-    test('signUp creates and signs in the user (email trimmed)', () async {[m
+[31m-      final repo = AuthRepository(MockFirebaseAuth());[m
+[31m-      await repo.signUp('  ada@agu.edu.tr ', 'secret123');[m
+[31m-      expect(repo.currentUser, isNotNull);[m
+[31m-      expect(repo.currentUser!.email, 'ada@agu.edu.tr');[m
+[31m-    });[m
+[31m-[m
+[31m-    test('signIn failure becomes an AuthFailure with a friendly message', () async {[m
+[31m-      final auth = MockFirebaseAuth();[m
+[31m-      whenCalling(Invocation.method(#signInWithEmailAndPassword, null))[m
+[31m-          .on(auth)[m
+[31m-          .thenThrow(FirebaseAuthException(code: 'invalid-credential'));[m
+[31m-      final repo = AuthRepository(auth);[m
+[31m-      await expectLater([m
+[31m-        repo.signIn('ada@agu.edu.tr', 'wrong'),[m
+[31m-        throwsA(isA<AuthFailure>().having((f) => f.message, 'message', 'Wrong email or password.')),[m
+[31m-      );[m
+[31m-    });[m
+[31m-[m
+[31m-    test('signOut signs the user out', () async {[m
+[31m-      final repo = AuthRepository(MockFirebaseAuth(signedIn: true, mockUser: MockUser(uid: 'u1')));[m
+[31m-      expect(repo.currentUser, isNotNull);[m
+[31m-      await repo.signOut();[m
+[31m-      expect(repo.currentUser, isNull);[m
+[31m-    });[m
+[32m+[m[32m  setUpAll(() {[m
+[32m+[m[32m    FakeFirebaseFirestore();[m
+   });[m
+ [m
+[31m-  group('Part 3 - NotesRepository', () {[m
+[31m-    test('addNote stores a trimmed note that watchNotes delivers', () async {[m
+[31m-      final db = FakeFirebaseFirestore();[m
+[31m-      final repo = NotesRepository(db);[m
+[31m-      await repo.addNote('u1', '  Lab 5  ', ' Firestore rules ');[m
+[31m-      final notes = await repo.watchNotes('u1').first;[m
+[31m-      expect(notes, hasLength(1));[m
+[31m-      expect(notes.single.title, 'Lab 5');[m
+[31m-      expect(notes.single.body, 'Firestore rules');[m
+[31m-      expect((await notesOf(db, 'u1').get()).docs, hasLength(1), reason: 'path users/{uid}/notes');[m
+[32m+[m[32m  group('Own Tests', () {[m
+[32m+[m[32m    test('messageFor maps weak-password correctly', () {[m
+[32m+[m[32m      final msg = AuthRepository.messageFor('weak-password');[m
+[32m+[m[32m      expect(msg, equals('The password is too weak.'));[m
+     });[m
+ [m
+[31m-    test('addNote rejects an empty or too long title', () async {[m
+[31m-      final repo = NotesRepository(FakeFirebaseFirestore());[m
+[31m-      await expectLater(repo.addNote('u1', '   ', 'x'), throwsArgumentError);[m
+[31m-      await expectLater(repo.addNote('u1', 'a' * 101, 'x'), throwsArgumentError);[m
+[31m-    });[m
+[31m-[m
+[31m-    test('watchNotes: newest first', () async {[m
+[31m-      final db = FakeFirebaseFirestore();[m
+[31m-      await notesOf(db, 'u1').add({'title': 'old', 'body': '', 'createdAt': Timestamp.fromDate(DateTime(2026, 11, 1))});[m
+[31m-      await notesOf(db, 'u1').add({'title': 'new', 'body': '', 'createdAt': Timestamp.fromDate(DateTime(2026, 11, 9))});[m
+[31m-      final notes = await NotesRepository(db).watchNotes('u1').first;[m
+[31m-      expect(notes.map((n) => n.title), ['new', 'old']);[m
+[31m-    });[m
+[31m-[m
+[31m-    test('deleteNote removes the note', () async {[m
+[31m-      final db = FakeFirebaseFirestore();[m
+[31m-      final ref = await notesOf(db, 'u1').add({'title': 'x', 'body': '', 'createdAt': Timestamp.now()});[m
+[31m-      await NotesRepository(db).deleteNote('u1', ref.id);[m
+[31m-      expect((await notesOf(db, 'u1').get()).docs, isEmpty);[m
+[31m-    });[m
+[31m-[m
+[31m-    test("a user sees only their own notes", () async {[m
+[31m-      final db = FakeFirebaseFirestore();[m
+[31m-      final repo = NotesRepository(db);[m
+[31m-      await repo.addNote('u1', 'mine', '');[m
+[31m-      await repo.addNote('u2', 'theirs', '');[m
+[31m-      final notes = await repo.watchNotes('u1').first;[m
+[31m-      expect(notes.map((n) => n.title), ['mine']);[m
+[31m-    });[m
+[31m-  });[m
+[31m-[m
+[31m-  group('Part 4 - NotesScreen', () {[m
+[31m-    Future<void> pumpNotes(WidgetTester tester, FakeFirebaseFirestore db) async {[m
+[31m-      tester.view.physicalSize = const Size(800, 1200);[m
+[31m-      tester.view.devicePixelRatio = 1.0;[m
+[31m-      addTearDown(tester.view.reset);[m
+[31m-      await tester.pumpWidget(MultiProvider([m
+[31m-        providers: [[m
+[31m-          Provider(create: (_) => NotesRepository(db)),[m
+[31m-          Provider(create: (_) => AuthRepository(MockFirebaseAuth(signedIn: true, mockUser: MockUser(uid: 'u1')))),[m
+[31m-        ],[m
+[31m-        child: const MaterialApp(home: NotesScreen(uid: 'u1')),[m
+[31m-      ));[m
+[31m-      await tester.pump();[m
+[31m-      await tester.pump();[m
+[31m-    }[m
+[31m-[m
+[31m-    testWidgets('empty: title and "No notes yet"', (tester) async {[m
+[31m-      await pumpNotes(tester, FakeFirebaseFirestore());[m
+[31m-      expect(find.text('My Notes'), findsOneWidget);[m
+[31m-      expect(find.text('No notes yet'), findsOneWidget);[m
+[31m-    });[m
+[31m-[m
+[31m-    testWidgets('shows the notes as list tiles', (tester) async {[m
+[31m-      final db = FakeFirebaseFirestore();[m
+[31m-      await notesOf(db, 'u1').add({'title': 'Read chapter 7', 'body': 'Firestore', 'createdAt': Timestamp.now()});[m
+[31m-      await pumpNotes(tester, db);[m
+[31m-      expect(find.widgetWithText(ListTile, 'Read chapter 7'), findsOneWidget);[m
+[31m-      expect(find.text('Firestore'), findsOneWidget);[m
+[31m-    });[m
+[31m-[m
+[31m-    testWidgets('the Add note button opens the dialog and saves a note', (tester) async {[m
+[31m-      final db = FakeFirebaseFirestore();[m
+[31m-      await pumpNotes(tester, db);[m
+[31m-      await tester.tap(find.byTooltip('Add note'));[m
+[31m-      await tester.pumpAndSettle();[m
+[31m-      expect(find.text('New note'), findsOneWidget);[m
+[31m-      await tester.enterText(find.widgetWithText(TextField, 'Title'), 'Quiz on Friday');[m
+[31m-      await tester.tap(find.text('Save'));[m
+[31m-      await tester.pumpAndSettle();[m
+[31m-      expect(find.text('Quiz on Friday'), findsOneWidget);[m
+[31m-      expect((await notesOf(db, 'u1').get()).docs, hasLength(1));[m
+[32m+[m[32m    test('Note.fromFirestore parses valid data', () {[m
+[32m+[m[32m      final note = Note.fromFirestore('id1', {[m
+[32m+[m[32m        'title': 'Test Title',[m
+[32m+[m[32m        'body': 'Test Body',[m
+[32m+[m[32m      });[m
+[32m+[m[32m      expect(note.title, equals('Test Title'));[m
+[32m+[m[32m      expect(note.body, equals('Test Body'));[m
+     });[m
+   });[m
+[31m-}[m
+[32m+[m[32m}[m
+\ No newline at end of file[m

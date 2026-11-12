@@ -1,17 +1,30 @@
-// Part 7: your own tests (at least 2, besides the example). They must test real code.
-// Ideas: a 100-character title is accepted; body is trimmed; 'network-request-failed';
-// signUp failure with whenCalling(...).thenThrow(...) (see lab05_test.dart).
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lab05_study_notes/data/auth_repository.dart';
+import 'package:lab05_study_notes/data/notes_repository.dart';
 
 void main() {
-  // Create one fake first: it makes FieldValue.serverTimestamp() work in tests.
   setUpAll(FakeFirebaseFirestore.new);
 
-  test('example: messageFor maps weak-password', () {
-    expect(AuthRepository.messageFor('weak-password'), contains('6 characters'));
+  test('messageFor maps network-request-failed', () {
+    expect(AuthRepository.messageFor('network-request-failed'),
+        contains('internet'));
   });
 
-  // TODO(7): your tests
+  test('a 100-character title is accepted', () async {
+    final db = FakeFirebaseFirestore();
+    final repo = NotesRepository(db);
+    await repo.addNote('u1', 'a' * 100, 'x');
+    final notes = await repo.watchNotes('u1').first;
+    expect(notes.length, 1);
+    expect(notes.first.title.length, 100);
+  });
+
+  test('addNote trims the body', () async {
+    final db = FakeFirebaseFirestore();
+    final repo = NotesRepository(db);
+    await repo.addNote('u1', 'Title', '  hello  ');
+    final notes = await repo.watchNotes('u1').first;
+    expect(notes.first.body, 'hello');
+  });
 }
